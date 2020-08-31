@@ -22,10 +22,14 @@ from typing import Any, Dict, List, Optional, Union
 from urllib import request
 from urllib.error import URLError
 
+from werkzeug.http import parse_cookie
+from flask import Response, session
+from flask_login import login_user
+
 from celery.utils.log import get_task_logger
 from sqlalchemy import and_, func
 
-from superset import app, db
+from superset import app, db, security_manager
 from superset.extensions import celery_app
 from superset.models.core import Log
 from superset.models.dashboard import Dashboard
@@ -82,7 +86,7 @@ def get_url(chart: Slice, extra_filters: Optional[Dict[str, Any]] = None) -> str
             "{SUPERSET_WEBSERVER_ADDRESS}:"
             "{SUPERSET_WEBSERVER_PORT}".format(**app.config)
         )
-        return f"{baseurl}{chart.get_explore_url(overrides=extra_filters)}"
+        return f"{baseurl}{chart.get_explore_url(base_url='/superset/explore_json', overrides=extra_filters)}"
 
 
 class Strategy:
@@ -254,6 +258,20 @@ class DashboardTagsStrategy(Strategy):
 
 strategies = [DummyStrategy, TopNDashboardsStrategy, DashboardTagsStrategy]
 
+def get_auth_cookies():
+    # Login with the user specified
+    with app.test_request_context():
+        user = security_manager.find_user('whopper')
+        login_user(user)
+        # A mock response object to get the cookie information from
+        response = Response()
+        app.session_interface.save_session(app, session, response)
+    cookies = []
+    for name, value in response.headers:
+        if name.lower() == "set-cookie":
+            cookie = parse_cookie(value)
+            cookies.append(cookie["session"])
+    return cookies
 
 @celery_app.task(name="cache-warmup")
 def cache_warmup(
@@ -285,10 +303,17 @@ def cache_warmup(
         return message
 
     results: Dict[str, List[str]] = {"success": [], "errors": []}
+    logger.info("Number of url to be fetched %s", str(len(strategy.get_urls())))
     for url in strategy.get_urls():
         try:
             logger.info("Fetching %s", url)
-            request.urlopen(url)
+
+            cookies = get_auth_cookies()
+            opener = request.build_opener()
+            opener.addheaders.append(("Cookie", "session={}".format(cookies[0])))
+            opener.open(url)
+            
+            #request.urlopen(url)
             results["success"].append(url)
         except URLError:
             logger.exception("Error warming up cache!")
