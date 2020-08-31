@@ -520,7 +520,7 @@ class CeleryConfig:  # pylint: disable=too-few-public-methods
             'schedule': crontab(minute=54, hour=16),  # @everyday 5AM # check for time zone
             'kwargs': {
                     'strategy_name': 'top_n_dashboards',
-                    'top_n': 50,
+                    'top_n': 25,
                     'since': '7 days ago',
                 },
         },
