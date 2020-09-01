@@ -55,7 +55,7 @@ tmp
 rat-results.txt
 
 # Node.js, webpack artifacts
-*.entry.js
+#*.entry.js
 *.js.map
 node_modules
 npm-debug.log*
