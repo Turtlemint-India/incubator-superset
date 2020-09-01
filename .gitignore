@@ -56,7 +56,7 @@ rat-results.txt
 
 # Node.js, webpack artifacts
 #*.entry.js
-*.js.map
+#*.js.map
 node_modules
 npm-debug.log*
 #superset/static/assets
