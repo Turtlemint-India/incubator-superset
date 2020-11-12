@@ -17,7 +17,7 @@ CACHE_CONFIG = {
 CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
 AUTH_TYPE = AUTH_OAUTH
 AUTH_USER_REGISTRATION = True
-AUTH_USER_REGISTRATION_ROLE = "Public"
+AUTH_USER_REGISTRATION_ROLE = "Gamma"
 
 OAUTH_PROVIDERS = [
     {'name': 'google', 'icon': 'fa-google', 'token_key': 'access_token', 'whitelist': ['@turtlemint.com'],
