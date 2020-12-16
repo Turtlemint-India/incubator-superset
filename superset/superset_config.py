@@ -2,14 +2,14 @@ import os
 
 from celery.schedules import crontab
 from flask_appbuilder.const import AUTH_OAUTH
-from werkzeug.contrib.cache import RedisCache
+from cachelib import RedisCache
 
 from superset.custom_sso_security_manager import CustomSsoSecurityManager
 
 SQLALCHEMY_DATABASE_URI = os.environ['SQLALCHEMY_DATABASE_URI']
 REDIS_SERVER_IP = os.getenv('REDIS_SERVER_IP', '')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
-SUPERSET_CACHE_REDIS_URL = "".join(['redis://:', REDIS_PASSWORD, '@', REDIS_SERVER_IP, ':6379/1'])
+SUPERSET_CACHE_REDIS_URL = "".join(['redis://:', REDIS_PASSWORD, '@', REDIS_SERVER_IP, ':6379/0'])
 SUPERSET_BROKER_URL = "".join(['redis://:', REDIS_PASSWORD, '@', REDIS_SERVER_IP, ':6379/0'])
 SUPERSET_CELERY_RESULT_BACKEND = "".join(['redis://:', REDIS_PASSWORD, '@', REDIS_SERVER_IP, ':6379/0'])
 
