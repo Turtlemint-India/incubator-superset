@@ -125,8 +125,7 @@ from superset.views.utils import (
 from superset.viz import BaseViz
 
 import flask_login
-from flask_appbuilder.security.sqla.models import PermissionView
-from flask_appbuilder.security.sqla.models import ViewMenu
+from flask_appbuilder.security.sqla.models import PermissionView, ViewMenu, Permission
 
 config = app.config
 CACHE_DEFAULT_TIMEOUT = config["CACHE_DEFAULT_TIMEOUT"]
@@ -1838,7 +1837,8 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
             view_entries = db.session.query(ViewMenu).filter(ViewMenu.name.like('%' + table_name + '%')).all()
             if view_entries:
                 id = view_entries[0].id
-                permission_view_entries = db.session.query(PermissionView).filter(PermissionView.permission_id == 70,
+                datasource_perm_id = db.session.query(Permission).filter(Permission.name=='datasource_access').all()[0].id
+                permission_view_entries = db.session.query(PermissionView).filter(PermissionView.permission_id == datasource_perm_id,
                                                                                   PermissionView.view_menu_id == id).all()
                 if permission_view_entries:
                     perm = permission_view_entries[0]
@@ -1846,10 +1846,10 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
                 for role in flask_login.current_user.roles:
                     if str(role) not in ["Public", "Gamma", "Alpha", "Admin", "sql_lab"]:
                         role.permissions.append(perm)
-                        print("Adding permission ", perm, " to role ", role)
+                        #print("Adding permission ", perm, " to role ", role)
                 db.session.commit()
         except:
-            print("Failed to add datasource access")
+            #print("Failed to add datasource access")
             pass
         ###
 
