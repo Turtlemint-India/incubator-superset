@@ -124,6 +124,10 @@ from superset.views.utils import (
 )
 from superset.viz import BaseViz
 
+import flask_login
+from flask_appbuilder.security.sqla.models import PermissionView
+from flask_appbuilder.security.sqla.models import ViewMenu
+
 config = app.config
 CACHE_DEFAULT_TIMEOUT = config["CACHE_DEFAULT_TIMEOUT"]
 SQLLAB_QUERY_COST_ESTIMATE_TIMEOUT = config["SQLLAB_QUERY_COST_ESTIMATE_TIMEOUT"]
@@ -1827,6 +1831,28 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         table.columns = cols
         table.metrics = [SqlMetric(metric_name="count", expression="count(*)")]
         db.session.commit()
+
+        # Adding datasource access (which recently created and its name can be found in 'table' variable) to role programmatically
+        try:
+            perm = None
+            view_entries = db.session.query(ViewMenu).filter(ViewMenu.name.like('%' + table_name + '%')).all()
+            if view_entries:
+                id = view_entries[0].id
+                permission_view_entries = db.session.query(PermissionView).filter(PermissionView.permission_id == 70,
+                                                                                  PermissionView.view_menu_id == id).all()
+                if permission_view_entries:
+                    perm = permission_view_entries[0]
+            if perm:
+                for role in flask_login.current_user.roles:
+                    if str(role) not in ["Public", "Gamma", "Alpha", "Admin", "sql_lab"]:
+                        role.permissions.append(perm)
+                        print("Adding permission ", perm, " to role ", role)
+                db.session.commit()
+        except:
+            print("Failed to add datasource access")
+            pass
+        ###
+
         return json_success(json.dumps({"table_id": table.id}))
 
     @has_access
