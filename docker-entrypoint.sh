@@ -37,5 +37,4 @@
 #
 
 
-#gunicorn -w 5 -k gevent --timeout 180 -b 0.0.0.0:$SUPERSET_WEBSERVER_PORT --limit-request-line 0 --limit-request-field_size 0 "superset.app:create_app()" &
-echo Hi
+gunicorn -w 5 -k gevent --timeout 180 -b 0.0.0.0:$SUPERSET_WEBSERVER_PORT --limit-request-line 0 --limit-request-field_size 0 "superset.app:create_app()" &
