@@ -379,6 +379,13 @@ def is_owner(obj: Union[Dashboard, Slice], user: User) -> bool:
     return obj and user in obj.owners
 
 
+def check_datasource_perms_extended(
+    _self: Any,
+    datasource_type: Optional[str] = None,
+    datasource_id: Optional[int] = None,
+) -> None:
+    pass
+
 def check_datasource_perms(
     _self: Any,
     datasource_type: Optional[str] = None,

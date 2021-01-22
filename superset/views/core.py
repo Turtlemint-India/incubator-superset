@@ -114,6 +114,7 @@ from superset.views.utils import (
     apply_display_max_row_limit,
     bootstrap_user_data,
     check_datasource_perms,
+    check_datasource_perms_extended,
     check_slice_perms,
     get_cta_schema_name,
     get_dashboard_extra_filters,
@@ -499,7 +500,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         methods=EXPLORE_JSON_METHODS,
     )
     @expose("/explore_json/", methods=EXPLORE_JSON_METHODS)
-    @etag_cache(CACHE_DEFAULT_TIMEOUT, check_perms=check_datasource_perms)
+    @etag_cache(CACHE_DEFAULT_TIMEOUT, check_perms=check_datasource_perms_extended)
     def explore_json(
         self, datasource_type: Optional[str] = None, datasource_id: Optional[int] = None
     ) -> FlaskResponse:
@@ -1573,6 +1574,19 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         session.commit()
         return json_success(json.dumps({"published": dash.published}))
 
+
+    def check_dashboard_permission(self, dash):
+        # check dashboard permission
+        user_roles_ids = [role.id for role in list(get_user_roles())]
+        perm_role_ids = [role.id for role in dash.roles]
+        user_id = g.user.id
+        owners_id = [owner.id for owner in dash.owners]
+        is_owner =True if user_id in owners_id else False
+        if (not is_owner) and (not (set(user_roles_ids) & set(perm_role_ids))):
+            return False
+
+        return True
+
     @has_access
     @expose("/dashboard/<dashboard_id_or_slug>/")
     def dashboard(  # pylint: disable=too-many-locals
@@ -1589,6 +1603,9 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         dash = qry.one_or_none()
         if not dash:
             abort(404)
+
+        if not self.check_dashboard_permission(dash):
+            abort(403)
 
         datasources = defaultdict(list)
         for slc in dash.slices:

@@ -35,6 +35,7 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    Sequence,
 )
 from sqlalchemy.engine.base import Connection
 from sqlalchemy.orm import relationship, sessionmaker, subqueryload
@@ -115,6 +116,22 @@ dashboard_user = Table(
     Column("dashboard_id", Integer, ForeignKey("dashboards.id")),
 )
 
+DashboardRoles = Table(
+    "dashboard_roles",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("dashboard_id", Integer, ForeignKey("dashboards.id"), nullable=False),
+    Column("role_id", Integer, ForeignKey("ab_role.id"), nullable=False),
+)
+
+# class DashboardRoles(Model):
+#     __tablename__ = "dashboard_roles"
+#     id = Column(Integer, Sequence("dashboard_roles_id_seq"), primary_key=True)
+#     dashboard_id = Column(Integer, nullable=False)
+#     role_id = Column(Integer, nullable=False)
+#
+#     def __repr__(self):
+#         return str(self.dashboard_id)
 
 class Dashboard(  # pylint: disable=too-many-instance-attributes
     Model, AuditMixinNullable, ImportMixin
@@ -133,6 +150,7 @@ class Dashboard(  # pylint: disable=too-many-instance-attributes
     slices = relationship("Slice", secondary=dashboard_slices, backref="dashboards")
     owners = relationship(security_manager.user_model, secondary=dashboard_user)
     published = Column(Boolean, default=False)
+    roles = relationship(security_manager.role_model, secondary=DashboardRoles)
 
     export_fields = [
         "dashboard_title",
