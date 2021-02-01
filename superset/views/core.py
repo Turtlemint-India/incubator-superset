@@ -1578,11 +1578,14 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     def check_dashboard_permission(self, dash):
         # check dashboard permission
         user_roles_ids = [role.id for role in list(get_user_roles())]
+        user_roles_names = [role.name for role in list(get_user_roles())]
         perm_role_ids = [role.id for role in dash.roles]
         user_id = g.user.id
         owners_id = [owner.id for owner in dash.owners]
-        is_owner =True if user_id in owners_id else False
-        if (not is_owner) and (not (set(user_roles_ids) & set(perm_role_ids))):
+        is_owner = True if user_id in owners_id else False
+        is_admin = True if 'Admin' in user_roles_names else False
+
+        if (not is_admin) and (not is_owner) and (not (set(user_roles_ids) & set(perm_role_ids))):
             return False
 
         return True
