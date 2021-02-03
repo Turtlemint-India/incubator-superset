@@ -161,18 +161,6 @@ DATASOURCE_MISSING_ERR = __("The data source seems to have been deleted")
 USER_MISSING_ERR = __("The user seems to have been deleted")
 
 
-def role_choice_query():
-    return db.session.query(ab_models.Role).all()
-
-
-def dashboard_choice_query():
-    return db.session.query(Dashboard).filter(Dashboard.id == 201).all()
-
-
-class RoleChoice(FlaskForm):
-    dashboard_field = QuerySelectMultipleField(query_factory=dashboard_choice_query)
-    roles_field = QuerySelectMultipleField(query_factory=role_choice_query)
-
 
 class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     """The base views for Superset!"""
@@ -1728,6 +1716,19 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
             return json_success(
                 json.dumps(bootstrap_data, default=utils.pessimistic_json_iso_dttm_ser)
             )
+
+        def role_choice_query():
+            return db.session.query(ab_models.Role).all()
+
+
+        def dashboard_choice_query():
+            return db.session.query(Dashboard).filter(Dashboard.id == dash.id).all()
+
+
+        class RoleChoice(FlaskForm):
+            dashboard_field = QuerySelectField(query_factory=dashboard_choice_query)
+            roles_field = QuerySelectMultipleField(query_factory=role_choice_query)
+
         form = RoleChoice()
         return self.render_template(
             "superset/dashboard.html",
