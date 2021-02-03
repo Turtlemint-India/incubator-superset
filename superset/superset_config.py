@@ -6,6 +6,7 @@ from cachelib import RedisCache
 
 from superset.custom_sso_security_manager import CustomSsoSecurityManager
 
+OAUTH_ENABLED = os.getenv('OAUTH_ENABLED', 0)
 SQLALCHEMY_DATABASE_URI = os.environ['SQLALCHEMY_DATABASE_URI']
 REDIS_SERVER_IP = os.getenv('REDIS_SERVER_IP', '')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
@@ -28,7 +29,8 @@ SQLLAB_VALIDATION_TIMEOUT = 180
 
 ENABLE_PROXY_FIX = True
 
-if os.getenv('OAUTH_ENABLED', 0):
+print("OAUTH_ENABLED is {}".format(OAUTH_ENABLED))
+if OAUTH_ENABLED:
     CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
     AUTH_TYPE = AUTH_OAUTH
     AUTH_USER_REGISTRATION = True
