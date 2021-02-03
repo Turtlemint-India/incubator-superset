@@ -9,7 +9,7 @@ from superset.custom_sso_security_manager import CustomSsoSecurityManager
 
 AUTH_TYPE_MAP = {0: AUTH_DB, 1: AUTH_OAUTH}
 
-OAUTH_ENABLED = os.getenv('OAUTH_ENABLED', 0)
+OAUTH_ENABLED = int(os.getenv('OAUTH_ENABLED', 0))
 SQLALCHEMY_DATABASE_URI = os.environ['SQLALCHEMY_DATABASE_URI']
 REDIS_SERVER_IP = os.getenv('REDIS_SERVER_IP', '')
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', '')
