@@ -1,3 +1,4 @@
+import logging
 import os
 
 from celery.schedules import crontab
@@ -6,6 +7,11 @@ from cachelib import RedisCache
 
 from superset.custom_sso_security_manager import CustomSsoSecurityManager
 
+logger = logging.getLogger(__name__)
+
+logger.info("=============")
+logger.info(os.getenv('OAUTH_ENABLED'))
+logger.info("=============")
 OAUTH_ENABLED = os.getenv('OAUTH_ENABLED', 0)
 SQLALCHEMY_DATABASE_URI = os.environ['SQLALCHEMY_DATABASE_URI']
 REDIS_SERVER_IP = os.getenv('REDIS_SERVER_IP', '')
