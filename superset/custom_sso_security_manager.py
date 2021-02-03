@@ -8,13 +8,6 @@ logger = logging.getLogger(__name__)
 
 class CustomSsoSecurityManager(SupersetSecurityManager):
 
-    def __init__(self, appbuilder):
-        super().__init__(appbuilder)
-        logger.info("Inside CustomSsoSecurityManager")
-        logger.info("=============")
-        logger.info(os.getenv('OAUTH_ENABLED'))
-        logger.info("=============")
-
     def auth_user_oauth(self, userinfo):
         """
             OAuth user Authentication
