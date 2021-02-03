@@ -1,6 +1,6 @@
 FROM python:3.6
 MAINTAINER Keshav Saini <keshav.s@turtlemint.com>
-ARG GIT_BRANCH=feature/async-query-support
+ARG GIT_BRANCH=develop
 ENV FLASK_APP=superset
 ENV NODE_TYPE=server
 ENV SUPERSET_CONFIG_PATH="/usr/local/lib/python3.6/site-packages/superset/superset_config.py"

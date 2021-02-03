@@ -28,25 +28,26 @@ SQLLAB_VALIDATION_TIMEOUT = 180
 
 ENABLE_PROXY_FIX = True
 
-CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
-AUTH_TYPE = AUTH_OAUTH
-AUTH_USER_REGISTRATION = True
-AUTH_USER_REGISTRATION_ROLE = "Gamma"
+if os.getenv('OAUTH_ENABLED', 0):
+    CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
+    AUTH_TYPE = AUTH_OAUTH
+    AUTH_USER_REGISTRATION = True
+    AUTH_USER_REGISTRATION_ROLE = "Gamma"
 
-OAUTH_PROVIDERS = [
-    {'name': 'google', 'icon': 'fa-google', 'token_key': 'access_token', 'whitelist': ['@turtlemint.com'],
-     'remote_app': {
-         'client_id': '78989321337-5e44ugm9ev8davgp7591njjv7o81naoc.apps.googleusercontent.com',
-         'client_secret': '-ul9faMKxh5ddwmXrchaUewr',
-         'api_base_url': 'https://www.googleapis.com/oauth2/v2/',
-         'client_kwargs': {
-             'scope': 'email profile'
-         },
-         'request_token_url': None,
-         'access_token_url': 'https://accounts.google.com/o/oauth2/token',
-         'authorize_url': 'https://accounts.google.com/o/oauth2/auth'}
-     }
-]
+    OAUTH_PROVIDERS = [
+        {'name': 'google', 'icon': 'fa-google', 'token_key': 'access_token', 'whitelist': ['@turtlemint.com'],
+         'remote_app': {
+             'client_id': '78989321337-5e44ugm9ev8davgp7591njjv7o81naoc.apps.googleusercontent.com',
+             'client_secret': '-ul9faMKxh5ddwmXrchaUewr',
+             'api_base_url': 'https://www.googleapis.com/oauth2/v2/',
+             'client_kwargs': {
+                 'scope': 'email profile'
+             },
+             'request_token_url': None,
+             'access_token_url': 'https://accounts.google.com/o/oauth2/token',
+             'authorize_url': 'https://accounts.google.com/o/oauth2/auth'}
+         }
+    ]
 
 
 class CeleryConfig:  # pylint: disable=too-few-public-methods
