@@ -26,6 +26,11 @@ from urllib import parse
 import backoff
 import pandas as pd
 import simplejson as json
+
+from flask_wtf import FlaskForm
+from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
+from wtforms import SelectMultipleField
+
 from flask import abort, flash, g, Markup, redirect, render_template, request, Response
 from flask_appbuilder import expose
 from flask_appbuilder.models.sqla.interface import SQLAInterface
@@ -76,7 +81,7 @@ from superset.exceptions import (
 )
 from superset.jinja_context import get_template_processor
 from superset.models.core import Database
-from superset.models.dashboard import Dashboard
+from superset.models.dashboard import Dashboard, DashboardRoles
 from superset.models.datasource_access_request import DatasourceAccessRequest
 from superset.models.slice import Slice
 from superset.models.sql_lab import Query, TabState
@@ -154,6 +159,19 @@ DATABASE_KEYS = [
 
 DATASOURCE_MISSING_ERR = __("The data source seems to have been deleted")
 USER_MISSING_ERR = __("The user seems to have been deleted")
+
+
+def role_choice_query():
+    return db.session.query(ab_models.Role).all()
+
+
+def dashboard_choice_query():
+    return db.session.query(Dashboard).filter(Dashboard.id == 201).all()
+
+
+class RoleChoice(FlaskForm):
+    dashboard_field = QuerySelectMultipleField(query_factory=dashboard_choice_query)
+    roles_field = QuerySelectMultipleField(query_factory=role_choice_query)
 
 
 class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
@@ -1574,7 +1592,6 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         session.commit()
         return json_success(json.dumps({"published": dash.published}))
 
-
     def check_dashboard_permission(self, dash):
         # check dashboard permission
         user_roles_ids = [role.id for role in list(get_user_roles())]
@@ -1589,6 +1606,21 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
             return False
 
         return True
+
+    @expose("/set_dashboard_roles/", methods=["POST"])
+    def set_dashboard_roles(self) -> FlaskResponse:
+        form_data = request.form.to_dict(flat=False)
+        role_ids = form_data['roles_field']
+        dashboard_id = form_data['dashboard_field'][0]
+        dash = db.session.query(Dashboard).filter(Dashboard.id == int(dashboard_id)).one()
+
+        if not self.check_dashboard_permission(dash):
+            abort(403)
+
+        for role_id in role_ids:
+            entry = DashboardRoles.insert().values(dashboard_id=dashboard_id, role_id=role_id)
+            db.session.execute(entry)
+            db.session.commit()
 
     @has_access
     @expose("/dashboard/<dashboard_id_or_slug>/")
@@ -1696,12 +1728,13 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
             return json_success(
                 json.dumps(bootstrap_data, default=utils.pessimistic_json_iso_dttm_ser)
             )
-
+        form = RoleChoice()
         return self.render_template(
             "superset/dashboard.html",
             entry="dashboard",
             standalone_mode=standalone_mode,
             title=dash.dashboard_title,
+            form=form,
             bootstrap_data=json.dumps(
                 bootstrap_data, default=utils.pessimistic_json_iso_dttm_ser
             ),
