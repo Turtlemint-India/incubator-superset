@@ -13,4 +13,4 @@ COPY requirements.txt ./
 COPY docker-entrypoint.sh ./
 RUN pip install -r requirements.txt \
     && pip install --upgrade --no-deps --force-reinstall git+https://github.com/Turtlemint-India/superset.git@${GIT_BRANCH}
-ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["sh", "docker-entrypoint.sh"]
