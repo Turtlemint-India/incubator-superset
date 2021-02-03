@@ -2,7 +2,7 @@ import logging
 import os
 
 from celery.schedules import crontab
-from flask_appbuilder.const import AUTH_OAUTH
+from flask_appbuilder.const import AUTH_OAUTH, AUTH_DB
 from cachelib import RedisCache
 
 from superset.custom_sso_security_manager import CustomSsoSecurityManager
@@ -30,7 +30,7 @@ SQLLAB_VALIDATION_TIMEOUT = 180
 
 ENABLE_PROXY_FIX = True
 
-if OAUTH_ENABLED:
+if OAUTH_ENABLED == 1:
     CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
     AUTH_TYPE = AUTH_OAUTH
     AUTH_USER_REGISTRATION = True
@@ -50,6 +50,10 @@ if OAUTH_ENABLED:
              'authorize_url': 'https://accounts.google.com/o/oauth2/auth'}
          }
     ]
+else:
+    CUSTOM_SECURITY_MANAGER = None
+    AUTH_TYPE = AUTH_DB
+    AUTH_USER_REGISTRATION = False
 
 
 class CeleryConfig:  # pylint: disable=too-few-public-methods
