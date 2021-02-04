@@ -1,7 +1,7 @@
 import os
 
 from celery.schedules import crontab
-from flask_appbuilder.const import AUTH_OAUTH, AUTH_DB
+from flask_appbuilder.const import AUTH_OAUTH
 from cachelib import RedisCache
 
 from superset.custom_sso_security_manager import CustomSsoSecurityManager
