@@ -16,15 +16,9 @@
   specific language governing permissions and limitations
   under the License.
 #}
-
-  <form action="/superset/set_dashboard_roles" method="post">
-    {{ form.csrf_token }}
-    <div> {{ form.dashboard_field }} </div>
-    <div> {{ form.roles_field }} </div>
-    <input type="submit">
-  </form>
 {% extends "superset/basic.html" %}
-
 {% block body %}
   <div id="app" data-bootstrap="{{ bootstrap_data }}" />
 {% endblock %}
+
+

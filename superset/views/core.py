@@ -28,8 +28,15 @@ import pandas as pd
 import simplejson as json
 
 from flask_wtf import FlaskForm
-from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
+from flask_appbuilder.fieldwidgets import Select2ManyWidget
+from flask_appbuilder.models.sqla.interface import SQLAInterface
+# from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
+from flask_appbuilder.fields import QuerySelectField, QuerySelectMultipleField
+from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
+
+from wtforms.fields.core import StringField
 from wtforms import SelectMultipleField
+from flask_appbuilder.baseviews import BaseModelView, BaseCRUDView
 
 from flask import abort, flash, g, Markup, redirect, render_template, request, Response
 from flask_appbuilder import expose
@@ -81,7 +88,7 @@ from superset.exceptions import (
 )
 from superset.jinja_context import get_template_processor
 from superset.models.core import Database
-from superset.models.dashboard import Dashboard, DashboardRoles
+from superset.models.dashboard import Dashboard, DashboardRoles, DashboardRolesClass
 from superset.models.datasource_access_request import DatasourceAccessRequest
 from superset.models.slice import Slice
 from superset.models.sql_lab import Query, TabState
@@ -159,8 +166,6 @@ DATABASE_KEYS = [
 
 DATASOURCE_MISSING_ERR = __("The data source seems to have been deleted")
 USER_MISSING_ERR = __("The user seems to have been deleted")
-
-
 
 class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     """The base views for Superset!"""
@@ -1595,20 +1600,81 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
 
         return True
 
-    @expose("/set_dashboard_roles/", methods=["POST"])
+    @expose("/dashboard/set_roles/", methods=["POST"])
     def set_dashboard_roles(self) -> FlaskResponse:
+
         form_data = request.form.to_dict(flat=False)
-        role_ids = form_data['roles_field']
-        dashboard_id = form_data['dashboard_field'][0]
-        dash = db.session.query(Dashboard).filter(Dashboard.id == int(dashboard_id)).one()
+        dashboard_title = form_data['dashboard_title']
+        role_ids = [int(id) for id in form_data['roles']]
+
+        dash = db.session.query(Dashboard).filter(Dashboard.dashboard_title == dashboard_title).one()
+        if not self.check_dashboard_permission(dash):
+            abort(403)
+
+        existing_roles = [entry.role_id for entry in db.session.query(DashboardRolesClass).filter(
+            DashboardRolesClass.dashboard_id == dash.id).all()]
+        to_add_roles = list(set(role_ids) - set(existing_roles))
+        to_delete_roles = list(set(existing_roles) - set(role_ids))
+
+        entries = []
+        for role_id in to_add_roles:
+            entries.append(DashboardRolesClass(dashboard_id=dash.id, role_id=role_id))
+
+        db.session.add_all(entries)
+        db.session.commit()
+
+        # delete roles
+        delete_entries = db.session.query(DashboardRolesClass).filter(
+            DashboardRolesClass.dashboard_id == dash.id,
+            DashboardRolesClass.role_id.in_(to_delete_roles))
+
+        for entry in delete_entries:
+            db.session.delete(entry)
+
+        db.session.commit()
+
+        return redirect("/dashboard/list/")
+
+    @expose("/dashboard/share/<dashboard_id_or_slug>/", methods=["GET"])
+    def share_roles(
+            self, dashboard_id_or_slug: str
+    ) -> FlaskResponse:
+        session = db.session()
+        qry = session.query(Dashboard)
+        if dashboard_id_or_slug.isdigit():
+            qry = qry.filter_by(id=int(dashboard_id_or_slug))
+        else:
+            qry = qry.filter_by(slug=dashboard_id_or_slug)
+
+        dash = qry.one_or_none()
+        if not dash:
+            abort(404)
 
         if not self.check_dashboard_permission(dash):
             abort(403)
 
-        for role_id in role_ids:
-            entry = DashboardRoles.insert().values(dashboard_id=dashboard_id, role_id=role_id)
-            db.session.execute(entry)
-            db.session.commit()
+        class BS3TextFieldROWidget(BS3TextFieldWidget):
+            def __call__(self, field, **kwargs):
+                kwargs['readonly'] = 'true'
+                return super(BS3TextFieldROWidget, self).__call__(field, **kwargs)
+
+        class RoleChoice(BaseCRUDView):
+            datamodel = SQLAInterface(Dashboard, session=db.session)
+            edit_columns = ['dashboard_title', 'roles']
+            description_columns = {"roles": _("Assign access of dashboard to teams.")}
+            edit_form_extra_fields = {
+                'dashboard_title': StringField('Dashboard Title', widget=BS3TextFieldROWidget())
+            }
+
+        DashboardModelObj = RoleChoice()
+        widgets = DashboardModelObj._edit(dash.id)
+        return self.render_template(
+            "appbuilder/general/model/edit.html",
+            title="Edit Dashboard Roles",
+            widgets=widgets,
+            form_action="/superset/dashboard/set_roles/",
+            related_views=[],
+        )
 
     @has_access
     @expose("/dashboard/<dashboard_id_or_slug>/")
@@ -1717,25 +1783,11 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
                 json.dumps(bootstrap_data, default=utils.pessimistic_json_iso_dttm_ser)
             )
 
-        def role_choice_query():
-            return db.session.query(ab_models.Role).all()
-
-
-        def dashboard_choice_query():
-            return db.session.query(Dashboard).filter(Dashboard.id == dash.id).all()
-
-
-        class RoleChoice(FlaskForm):
-            dashboard_field = QuerySelectField(query_factory=dashboard_choice_query)
-            roles_field = QuerySelectMultipleField(query_factory=role_choice_query)
-
-        form = RoleChoice()
         return self.render_template(
             "superset/dashboard.html",
             entry="dashboard",
             standalone_mode=standalone_mode,
             title=dash.dashboard_title,
-            form=form,
             bootstrap_data=json.dumps(
                 bootstrap_data, default=utils.pessimistic_json_iso_dttm_ser
             ),
