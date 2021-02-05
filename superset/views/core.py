@@ -1604,7 +1604,6 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         user_id = g.user.id
         owners_id = [owner.id for owner in dash.owners]
         is_owner = True if user_id in owners_id else False
-        
         return is_owner
 
     @expose("/dashboard/set_roles/", methods=["POST"])
@@ -1657,8 +1656,8 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         dash = qry.one_or_none()
         if not dash:
             abort(404)
-
-        if not self.check_dashboard_permission(dash):
+            
+        if not self.is_owner(dash):
             abort(403)
 
         class BS3TextFieldROWidget(BS3TextFieldWidget):

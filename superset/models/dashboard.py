@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
 from urllib import parse
 
 import sqlalchemy as sqla
+import flask_login
 from flask_appbuilder import Model
 from flask_appbuilder.models.decorators import renders
 from flask_appbuilder.security.sqla.models import User
@@ -208,8 +209,10 @@ class Dashboard(  # pylint: disable=too-many-instance-attributes
 
     def share_link(self) -> Markup:
         title = "Share"
-        return Markup(f'<a href="/superset/dashboard/share/{self.id}">{title}</a>')
-
+        if flask_login.current_user.id in [owner.id for owner in self.owners]:
+            return Markup(f'<a href="/superset/dashboard/share/{self.id}">{title}</a>')
+        else:
+            return "Not Allowed"
     @property
     def digest(self) -> str:
         """
