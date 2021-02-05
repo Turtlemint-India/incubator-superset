@@ -21,8 +21,11 @@
 #    fi
 #}
 
+echo Upgrading Superset DB
 superset db upgrade
+echo Superset DB upgrade done
 echo Container deployment type "$NODE_TYPE"
+echo OAUTH_ENABLED is "$OAUTH_ENABLED"
 if [ $NODE_TYPE = "server" ]; then
   gunicorn -w 5 -k gevent --timeout 180 -b 0.0.0.0:$SUPERSET_WEBSERVER_PORT --limit-request-line 0 --limit-request-field_size 0 "superset.app:create_app()"
 elif [ $NODE_TYPE = "worker" ]; then
