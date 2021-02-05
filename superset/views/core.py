@@ -1600,6 +1600,13 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
 
         return True
 
+    def is_owner(self, dash):
+        user_id = g.user.id
+        owners_id = [owner.id for owner in dash.owners]
+        is_owner = True if user_id in owners_id else False
+        
+        return is_owner
+
     @expose("/dashboard/set_roles/", methods=["POST"])
     def set_dashboard_roles(self) -> FlaskResponse:
 
@@ -1608,7 +1615,8 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         role_ids = [int(id) for id in form_data['roles']]
 
         dash = db.session.query(Dashboard).filter(Dashboard.dashboard_title == dashboard_title).one()
-        if not self.check_dashboard_permission(dash):
+
+        if not self.is_owner(dash):
             abort(403)
 
         existing_roles = [entry.role_id for entry in db.session.query(DashboardRolesClass).filter(
