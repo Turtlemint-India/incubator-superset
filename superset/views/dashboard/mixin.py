@@ -82,7 +82,8 @@ class DashboardMixin:  # pylint: disable=too-few-public-methods
         "css": _("CSS"),
         "json_metadata": _("JSON Metadata"),
         "table_names": _("Underlying Tables"),
-        "share_link": _("Share with teams")
+        "share_link": _("Share with teams"),
+        "roles": _("Team")
     }
 
     def pre_delete(self, item: "DashboardMixin") -> None:  # pylint: disable=no-self-use
