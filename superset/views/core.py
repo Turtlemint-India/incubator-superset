@@ -1586,6 +1586,13 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         return json_success(json.dumps({"published": dash.published}))
 
     def check_dashboard_permission(self, dash):
+        """
+        Check for dashboard access permission with the help of
+        dashboard_roles table where user role is mapped with
+        dashboard_id.
+        :param dash:
+        :return: True if user has access to dashboard.
+        """
         # check dashboard permission
         user_roles_ids = [role.id for role in list(get_user_roles())]
         user_roles_names = [role.name for role in list(get_user_roles())]
@@ -1608,6 +1615,10 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
 
     @expose("/dashboard/set_roles/", methods=["POST"])
     def set_dashboard_roles(self) -> FlaskResponse:
+        """
+        API endpoint to edit roles in dashboard_roles table (to edit dashboard access with roles).
+        :return: dashboard list page
+        """
 
         form_data = request.form.to_dict(flat=False)
         dashboard_title = form_data['dashboard_title']
@@ -1646,6 +1657,11 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     def share_roles(
             self, dashboard_id_or_slug: str
     ) -> FlaskResponse:
+        """
+        API endpoint to get edit widget for sharing dashboard with roles.
+        :param dashboard_id_or_slug: dashboard id or slug
+        :return: Edit widget to set roles to dashboard with explicitly form action /superset/dashboard/set_roles/
+        """
         session = db.session()
         qry = session.query(Dashboard)
         if dashboard_id_or_slug.isdigit():
@@ -1944,28 +1960,6 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         table.metrics = [SqlMetric(metric_name="count", expression="count(*)")]
         db.session.commit()
 
-        # # Adding datasource access (which recently created and its name can be found in 'table' variable) to role programmatically
-        # try:
-        #     perm = None
-        #     view_entries = db.session.query(ViewMenu).filter(ViewMenu.name.like('%' + table_name + '%')).all()
-        #     if view_entries:
-        #         id = view_entries[0].id
-        #         datasource_perm_id = db.session.query(Permission).filter(Permission.name=='datasource_access').all()[0].id
-        #         permission_view_entries = db.session.query(PermissionView).filter(PermissionView.permission_id == datasource_perm_id,
-        #                                                                           PermissionView.view_menu_id == id).all()
-        #         if permission_view_entries:
-        #             perm = permission_view_entries[0]
-        #     if perm:
-        #         for role in flask_login.current_user.roles:
-        #             if str(role) not in ["Public", "Gamma", "Alpha", "Admin", "sql_lab"]:
-        #                 role.permissions.append(perm)
-        #                 #print("Adding permission ", perm, " to role ", role)
-        #         db.session.commit()
-        # except:
-        #     #print("Failed to add datasource access")
-        #     pass
-        # ###
-        #
         return json_success(json.dumps({"table_id": table.id}))
 
     @has_access

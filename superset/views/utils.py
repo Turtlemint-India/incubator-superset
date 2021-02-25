@@ -384,6 +384,16 @@ def check_datasource_perms_extended(
     datasource_type: Optional[str] = None,
     datasource_id: Optional[int] = None,
 ) -> None:
+    """
+    Can be used to bypass datasource permission access.
+    Use check_datasource_perms_extended as a decorator
+    instead of check_datasource_perms if you need to
+    bypass datasource permission access.
+    :param _self:
+    :param datasource_type: optional
+    :param datasource_id: optional
+    :return: Null
+    """
     pass
 
 def check_datasource_perms(
