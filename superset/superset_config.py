@@ -95,3 +95,5 @@ RESULTS_BACKEND = RedisCache(
 SUPERSET_WEBSERVER_PROTOCOL = os.environ['SUPERSET_WEBSERVER_PROTOCOL']
 SUPERSET_WEBSERVER_ADDRESS = os.environ['SUPERSET_WEBSERVER_ADDRESS']
 SUPERSET_WEBSERVER_PORT = os.environ['SUPERSET_WEBSERVER_PORT']
+
+SUPERSET_WEBSERVER_DOMAINS = ['service.prismd.stage.mintpro.in', 'service1.prismd.stage.mintpro.in', 'service2.prismd.stage.mintpro.in']
