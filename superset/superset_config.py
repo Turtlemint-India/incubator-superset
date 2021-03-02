@@ -98,3 +98,4 @@ SUPERSET_WEBSERVER_PORT = os.environ['SUPERSET_WEBSERVER_PORT']
 
 SUPERSET_WEBSERVER_DOMAINS = ['www.service.prismd.stage.mintpro.in']
 ENABLE_CORS = True
+HTTP_HEADERS = {}
