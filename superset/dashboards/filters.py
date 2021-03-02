@@ -23,6 +23,7 @@ from sqlalchemy.orm.query import Query
 from superset import db, security_manager
 from superset.models.core import FavStar
 from superset.models.dashboard import Dashboard
+from flask_appbuilder.security.sqla.models import Role
 from superset.models.slice import Slice
 from superset.views.base import BaseFilter, get_user_roles
 
@@ -54,12 +55,11 @@ class DashboardFilter(BaseFilter):  # pylint: disable=too-few-public-methods
     This means they do not get curation but can still sort by "published"
     if they wish to see those dashboards which are published first
     """
-
     def apply(self, query: Query, value: Any) -> Query:
         user_roles = [role.name.lower() for role in list(get_user_roles())]
+        user_roles_ids = [role.id for role in list(get_user_roles())]
         if "admin" in user_roles:
             return query
-
         datasource_perms = security_manager.user_view_menu_names("datasource_access")
         schema_perms = security_manager.user_view_menu_names("schema_access")
         published_dash_query = (
@@ -92,11 +92,14 @@ class DashboardFilter(BaseFilter):  # pylint: disable=too-few-public-methods
             )
         )
 
+        roles_based_query = (db.session.query(Dashboard.id).join(Dashboard.roles).filter(and_(Dashboard.published.is_(True), Role.id.in_(user_roles_ids))))
+
         query = query.filter(
             or_(
                 Dashboard.id.in_(owner_ids_query),
-                Dashboard.id.in_(published_dash_query),
-                Dashboard.id.in_(users_favorite_dash_query),
+                #Dashboard.id.in_(published_dash_query),
+                #Dashboard.id.in_(users_favorite_dash_query),
+                Dashboard.id.in_(roles_based_query)
             )
         )
 
