@@ -70,10 +70,10 @@ class CeleryConfig:  # pylint: disable=too-few-public-methods
     CELERYBEAT_SCHEDULE = {
         'cache-warmup-hourly': {
             'task': 'cache-warmup',
-            'schedule': crontab(minute=54, hour=16),  # @everyday 5AM # check for time zone
+            'schedule': crontab(minute=30, hour='2,6,10,14'),  # check for time zone
             'kwargs': {
                     'strategy_name': 'top_n_dashboards',
-                    'top_n': 25,
+                    'top_n': 50,
                     'since': '7 days ago',
                 },
         },
