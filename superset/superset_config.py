@@ -96,7 +96,7 @@ SUPERSET_WEBSERVER_PROTOCOL = os.environ['SUPERSET_WEBSERVER_PROTOCOL']
 SUPERSET_WEBSERVER_ADDRESS = os.environ['SUPERSET_WEBSERVER_ADDRESS']
 SUPERSET_WEBSERVER_PORT = os.environ['SUPERSET_WEBSERVER_PORT']
 
-SUPERSET_WEBSERVER_DOMAINS = ['https://www.prismd.stage.mintpro.in', 'https://www.service.prismd.stage.mintpro.in', 'https://www.service1.prismd.stage.mintpro.in', 'https://www.service2.prismd.stage.mintpro.in']
+SUPERSET_WEBSERVER_DOMAINS = ['superset1.com:8088', 'superset2.com:8088', 'superset3.com:8088']
 ENABLE_CORS = True
 HTTP_HEADERS = {}
 CORS_OPTIONS = {
