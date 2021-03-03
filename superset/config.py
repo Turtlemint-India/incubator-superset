@@ -168,7 +168,7 @@ SQLALCHEMY_CUSTOM_PASSWORD_STORE = None
 QUERY_SEARCH_LIMIT = 1000
 
 # Flask-WTF flag for CSRF
-WTF_CSRF_ENABLED = True
+WTF_CSRF_ENABLED = False
 
 # Add endpoints that need to be exempt from CSRF protection
 WTF_CSRF_EXEMPT_LIST = ["superset.views.core.log"]
@@ -858,7 +858,7 @@ ENABLE_ROW_LEVEL_SECURITY = False
 #
 SESSION_COOKIE_HTTPONLY = True  # Prevent cookie from being read by frontend JS?
 SESSION_COOKIE_SECURE = False  # Prevent cookie from being transmitted over non-tls?
-SESSION_COOKIE_SAMESITE = "Lax"  # One of [None, 'Lax', 'Strict']
+SESSION_COOKIE_SAMESITE = "None"  # One of [None, 'Lax', 'Strict']
 
 # Flask configuration variables
 SEND_FILE_MAX_AGE_DEFAULT = 60 * 60 * 24 * 365  # Cache static resources
