@@ -99,4 +99,19 @@ SUPERSET_WEBSERVER_PORT = os.environ['SUPERSET_WEBSERVER_PORT']
 SUPERSET_WEBSERVER_DOMAINS = ['www.prismd.stage.mintpro.in', 'www.service.prismd.stage.mintpro.in']
 ENABLE_CORS = True
 HTTP_HEADERS = {}
+CORS_OPTIONS = {
+    'supports_credentials': True,
+    'allow_headers': [
+        'X-CSRFToken', 'Content-Type', 'Origin', 'X-Requested-With', 'Accept',
+    ],
+    'resources': [
+         '/superset/csrf_token/' , # auth
+         '/api/v1/formData/',  # sliceId => formData
+         '/superset/explore_json/*',  # legacy query API, formData => queryData
+         '/api/v1/query/',  # new query API, queryContext => queryData
+         '/superset/fetch_datasource_metadata/'  # datasource metadata
+
+    ],
+    'origins': ['https://www.service.prismd.stage.mintpro.in'],
+}
 # HTTP_HEADERS={'X-Frame-Options':'SAMEORIGIN'} 
