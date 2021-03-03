@@ -112,6 +112,6 @@ CORS_OPTIONS = {
          '/superset/fetch_datasource_metadata/'  # datasource metadata
 
     ],
-    'origins': ['https://www.prismd.stage.mintpro.in', 'https://www.service.prismd.stage.mintpro.in'],
+    'origins': ['https://www.prismd.stage.mintpro.in', 'https://www.service.prismd.stage.mintpro.in', 'https://www.service1.prismd.stage.mintpro.in', 'https://www.service2.prismd.stage.mintpro.in'],
 }
 # HTTP_HEADERS={'X-Frame-Options':'SAMEORIGIN'} 
