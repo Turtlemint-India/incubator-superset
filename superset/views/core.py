@@ -1622,7 +1622,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
 
         form_data = request.form.to_dict(flat=False)
         dashboard_title = form_data['dashboard_title']
-        role_ids = [int(id) for id in form_data['roles']]
+        role_ids = [int(id) for id in form_data.get('roles', [])]
 
         dash = db.session.query(Dashboard).filter(Dashboard.dashboard_title == dashboard_title).one()
 
