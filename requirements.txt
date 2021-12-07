@@ -105,6 +105,7 @@ mysqlclient==1.4.2.post1
 Authlib==0.15.1
 requests==2.24.0
 PyAthena
+psycopg2-binary
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
