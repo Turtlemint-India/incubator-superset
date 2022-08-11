@@ -22,7 +22,6 @@ from sqlalchemy.orm.query import Query
 from superset import db, security_manager
 from superset.models.core import FavStar
 from superset.models.dashboard import Dashboard
-from flask_appbuilder.security.sqla.models import Role
 from superset.models.slice import Slice
 from superset.views.base import BaseFilter
 
@@ -43,7 +42,6 @@ class DashboardFilter(BaseFilter):  # pylint: disable=too-few-public-methods
 
     def apply(self, query: Query, value: Any) -> Query:
         user_roles = [role.name.lower() for role in list(get_user_roles())]
-        user_roles_ids = [role.id for role in list(get_user_roles())]
         if "admin" in user_roles:
             return query
 
@@ -78,14 +76,12 @@ class DashboardFilter(BaseFilter):  # pylint: disable=too-few-public-methods
                 == security_manager.user_model.get_user_id()
             )
         )
-        roles_based_query = (db.session.query(Dashboard.id).join(Dashboard.roles).filter(and_(Dashboard.published.is_(True), Role.id.in_(user_roles_ids))))
 
         query = query.filter(
             or_(
                 Dashboard.id.in_(owner_ids_query),
-                #Dashboard.id.in_(published_dash_query),
-                #Dashboard.id.in_(users_favorite_dash_query),
-                Dashboard.id.in_(roles_based_query)
+                Dashboard.id.in_(published_dash_query),
+                Dashboard.id.in_(users_favorite_dash_query)
             )
         )
 

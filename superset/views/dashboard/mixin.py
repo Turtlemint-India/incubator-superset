@@ -27,8 +27,8 @@ class DashboardMixin:  # pylint: disable=too-few-public-methods
     add_title = _("Add Dashboard")
     edit_title = _("Edit Dashboard")
 
-    list_columns = ["dashboard_link", "creator", "modified", "roles", "share_link"]
-    order_columns = ["dashboard_link", "modified"]
+    list_columns = ["dashboard_link", "creator", "published", "modified"]
+    order_columns = ["dashboard_link", "modified", "published"]
     edit_columns = [
         "dashboard_title",
         "slug",
@@ -36,8 +36,7 @@ class DashboardMixin:  # pylint: disable=too-few-public-methods
         "position_json",
         "css",
         "json_metadata",
-        "published",
-        "roles"
+        "published"
     ]
     show_columns = edit_columns + ["table_names", "charts"]
     search_columns = ("dashboard_title", "slug", "owners", "published")
@@ -66,8 +65,7 @@ class DashboardMixin:  # pylint: disable=too-few-public-methods
         "published": _(
             "Determines whether or not this dashboard is "
             "visible in the list of all dashboards"
-        ),
-        "roles": _("Assign access of dashboard to teams.")
+        )
     }
     base_filters = [["slice", DashboardFilter, lambda: []]]
     label_columns = {
@@ -81,9 +79,7 @@ class DashboardMixin:  # pylint: disable=too-few-public-methods
         "position_json": _("Position JSON"),
         "css": _("CSS"),
         "json_metadata": _("JSON Metadata"),
-        "table_names": _("Underlying Tables"),
-        "share_link": _("Share with teams"),
-        "roles": _("Team")
+        "table_names": _("Underlying Tables")
     }
 
     def pre_delete(self, item: "DashboardMixin") -> None:  # pylint: disable=no-self-use

@@ -27,17 +27,6 @@ import backoff
 import pandas as pd
 import simplejson as json
 
-from flask_wtf import FlaskForm
-from flask_appbuilder.fieldwidgets import Select2ManyWidget
-from flask_appbuilder.models.sqla.interface import SQLAInterface
-# from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
-from flask_appbuilder.fields import QuerySelectField, QuerySelectMultipleField
-from flask_appbuilder.fieldwidgets import BS3TextFieldWidget
-
-from wtforms.fields.core import StringField
-from wtforms import SelectMultipleField
-from flask_appbuilder.baseviews import BaseModelView, BaseCRUDView
-
 from flask import abort, flash, g, Markup, redirect, render_template, request, Response
 from flask_appbuilder import expose
 from flask_appbuilder.models.sqla.interface import SQLAInterface
@@ -88,7 +77,7 @@ from superset.exceptions import (
 )
 from superset.jinja_context import get_template_processor
 from superset.models.core import Database
-from superset.models.dashboard import Dashboard, DashboardRoles, DashboardRolesClass
+from superset.models.dashboard import Dashboard
 from superset.models.datasource_access_request import DatasourceAccessRequest
 from superset.models.slice import Slice
 from superset.models.sql_lab import Query, TabState
@@ -126,7 +115,6 @@ from superset.views.utils import (
     apply_display_max_row_limit,
     bootstrap_user_data,
     check_datasource_perms,
-    check_datasource_perms_extended,
     check_slice_perms,
     get_cta_schema_name,
     get_dashboard_extra_filters,
@@ -137,9 +125,7 @@ from superset.views.utils import (
 )
 from superset.viz import BaseViz
 
-# import flask_login
-# from flask_appbuilder.security.sqla.models import PermissionView, ViewMenu, Permission
-#
+
 config = app.config
 CACHE_DEFAULT_TIMEOUT = config["CACHE_DEFAULT_TIMEOUT"]
 SQLLAB_QUERY_COST_ESTIMATE_TIMEOUT = config["SQLLAB_QUERY_COST_ESTIMATE_TIMEOUT"]
@@ -511,7 +497,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         methods=EXPLORE_JSON_METHODS,
     )
     @expose("/explore_json/", methods=EXPLORE_JSON_METHODS)
-    @etag_cache(CACHE_DEFAULT_TIMEOUT, check_perms=check_datasource_perms_extended)
+    @etag_cache(CACHE_DEFAULT_TIMEOUT, check_perms=check_datasource_perms)
     def explore_json(
         self, datasource_type: Optional[str] = None, datasource_id: Optional[int] = None
     ) -> FlaskResponse:
@@ -1585,120 +1571,6 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         session.commit()
         return json_success(json.dumps({"published": dash.published}))
 
-    def check_dashboard_permission(self, dash):
-        """
-        Check for dashboard access permission with the help of
-        dashboard_roles table where user role is mapped with
-        dashboard_id.
-        :param dash:
-        :return: True if user has access to dashboard.
-        """
-        # check dashboard permission
-        user_roles_ids = [role.id for role in list(get_user_roles())]
-        user_roles_names = [role.name for role in list(get_user_roles())]
-        perm_role_ids = [role.id for role in dash.roles]
-        user_id = g.user.id
-        owners_id = [owner.id for owner in dash.owners]
-        is_owner = True if user_id in owners_id else False
-        is_admin = True if 'Admin' in user_roles_names else False
-
-        if (not is_admin) and (not is_owner) and (not (set(user_roles_ids) & set(perm_role_ids))):
-            return False
-
-        return True
-
-    def is_owner(self, dash):
-        user_id = g.user.id
-        owners_id = [owner.id for owner in dash.owners]
-        is_owner = True if user_id in owners_id else False
-        return is_owner
-
-    @expose("/dashboard/set_roles/", methods=["POST"])
-    def set_dashboard_roles(self) -> FlaskResponse:
-        """
-        API endpoint to edit roles in dashboard_roles table (to edit dashboard access with roles).
-        :return: dashboard list page
-        """
-
-        form_data = request.form.to_dict(flat=False)
-        dashboard_title = form_data['dashboard_title']
-        role_ids = [int(id) for id in form_data.get('roles', [])]
-
-        dash = db.session.query(Dashboard).filter(Dashboard.dashboard_title == dashboard_title).one()
-
-        if not self.is_owner(dash):
-            abort(403)
-
-        existing_roles = [entry.role_id for entry in db.session.query(DashboardRolesClass).filter(
-            DashboardRolesClass.dashboard_id == dash.id).all()]
-        to_add_roles = list(set(role_ids) - set(existing_roles))
-        to_delete_roles = list(set(existing_roles) - set(role_ids))
-
-        entries = []
-        for role_id in to_add_roles:
-            entries.append(DashboardRolesClass(dashboard_id=dash.id, role_id=role_id))
-
-        db.session.add_all(entries)
-        db.session.commit()
-
-        # delete roles
-        delete_entries = db.session.query(DashboardRolesClass).filter(
-            DashboardRolesClass.dashboard_id == dash.id,
-            DashboardRolesClass.role_id.in_(to_delete_roles))
-
-        for entry in delete_entries:
-            db.session.delete(entry)
-
-        db.session.commit()
-
-        return redirect("/dashboard/list/")
-
-    @expose("/dashboard/share/<dashboard_id_or_slug>/", methods=["GET"])
-    def share_roles(
-            self, dashboard_id_or_slug: str
-    ) -> FlaskResponse:
-        """
-        API endpoint to get edit widget for sharing dashboard with roles.
-        :param dashboard_id_or_slug: dashboard id or slug
-        :return: Edit widget to set roles to dashboard with explicitly form action /superset/dashboard/set_roles/
-        """
-        session = db.session()
-        qry = session.query(Dashboard)
-        if dashboard_id_or_slug.isdigit():
-            qry = qry.filter_by(id=int(dashboard_id_or_slug))
-        else:
-            qry = qry.filter_by(slug=dashboard_id_or_slug)
-
-        dash = qry.one_or_none()
-        if not dash:
-            abort(404)
-            
-        if not self.is_owner(dash):
-            abort(403)
-
-        class BS3TextFieldROWidget(BS3TextFieldWidget):
-            def __call__(self, field, **kwargs):
-                kwargs['readonly'] = 'true'
-                return super(BS3TextFieldROWidget, self).__call__(field, **kwargs)
-
-        class RoleChoice(BaseCRUDView):
-            datamodel = SQLAInterface(Dashboard, session=db.session)
-            edit_columns = ['dashboard_title', 'roles']
-            description_columns = {"roles": _("Assign access of dashboard to teams.")}
-            edit_form_extra_fields = {
-                'dashboard_title': StringField('Dashboard Title', widget=BS3TextFieldROWidget())
-            }
-
-        DashboardModelObj = RoleChoice()
-        widgets = DashboardModelObj._edit(dash.id)
-        return self.render_template(
-            "appbuilder/general/model/edit.html",
-            title="Edit Dashboard Roles",
-            widgets=widgets,
-            form_action="/superset/dashboard/set_roles/",
-            related_views=[],
-        )
-
     @has_access
     @expose("/dashboard/<dashboard_id_or_slug>/")
     def dashboard(  # pylint: disable=too-many-locals
@@ -1715,9 +1587,6 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         dash = qry.one_or_none()
         if not dash:
             abort(404)
-
-        if not self.check_dashboard_permission(dash):
-            abort(403)
 
         datasources = defaultdict(list)
         for slc in dash.slices:
