@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
 from urllib import parse
 
 import sqlalchemy as sqla
-import flask_login
 from flask_appbuilder import Model
 from flask_appbuilder.models.decorators import renders
 from flask_appbuilder.security.sqla.models import User
